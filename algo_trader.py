@@ -6,7 +6,7 @@ from transformers import pipeline
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 BUDGET = 1500.00
 ALLOCATIONS = [0.50, 0.30, 0.20]
-WATCHLIST = ["AAPL", "MSFT", "GOOGL", "NVDA", "JNJ", "V", "PG", "HD"]
+WATCHLIST = ["AAPL", "MSFT", "GOOGL", "NVDA", "META", "TSLA", "AMZN", "ORCL", "SPY", "QQQ", "AMD" "FOX", "SPCX" "CVX"]
 
 sentiment_analyzer = pipeline("text-classification", model="ProsusAI/finbert")
 
