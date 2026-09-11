@@ -4,9 +4,13 @@ import requests
 from transformers import pipeline
 
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
-BUDGET = 1500.00
-ALLOCATIONS = [0.50, 0.30, 0.20]
-WATCHLIST = ["AAPL", "MSFT", "GOOGL", "NVDA", "META", "TSLA", "AMZN", "ORCL", "SPY", "QQQ", "AMD" "FOX", "SPCX" "CVX"]
+# Fetch the top 50 highly liquid stocks from the S&P 500
+print("Fetching dynamic ticker list...")
+url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+headers = {"User-Agent":"Mozilla/5.0 (Windows NT10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0 Safari/537.36"}
+html = requests.get(url, headers=headers).text
+table = pd.read_html(StringIO(html))[0]
+WATCHLIST = table[table['CIK'].notnull()]['Symbol'].tolist()[:50]
 
 sentiment_analyzer = pipeline("text-classification", model="ProsusAI/finbert")
 
