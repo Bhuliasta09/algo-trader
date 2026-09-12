@@ -47,7 +47,7 @@ scores = {symbol: get_stock_score(symbol) for symbol in WATCHLIST}
 top_picks = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:3]
 
 BUDGET = 1500
-ALLOCATIONS = {0.10, 0.10, 0.10]
+ALLOCATIONS = [0.10, 0.10, 0.10]
 
 embed_fields = []
 for i, (symbol, score) in enumerate(top_picks):
