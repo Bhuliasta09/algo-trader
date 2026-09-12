@@ -48,6 +48,7 @@ top_picks = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:3]
 
 embed_fields = []
 for i, (symbol, score) in enumerate(top_picks):
+    BUDGET = 200
     investment = BUDGET * ALLOCATIONS[i]
     embed_fields.append({
         "name": f"#{i+1}: {symbol}",
