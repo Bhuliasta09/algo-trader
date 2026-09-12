@@ -2,6 +2,8 @@ import os
 import yfinance as yf
 import requests
 from transformers import pipeline
+import pandas as pd
+from io import StringIO
 
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 # Fetch the top 50 highly liquid stocks from the S&P 500
