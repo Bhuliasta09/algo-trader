@@ -55,15 +55,10 @@ for i, (symbol, score) in enumerate(top_picks):
             print(f"Successfully bought {amount_to_buy} of {symbol}")
         except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
+        try:
+            current_price = exchange.fetch_ticker(symbol)['last']
+            amount_to_buy = investment_usd / current_price
+            order = exchange.create_market_buy_order(symbol, amount_to_buy)
             print(f"Successfully bought {amount_to_buy} of {symbol}")
         except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
-
-requests.post(WEBHOOK_URL, json={
-    "username": "Algo-Trader",
-    "embeds": [{
-        "title": "🚨 Monthly Robinhood Allocations",
-        "color": 5763719,
-        "fields": embed_fields
-    }]
-})
