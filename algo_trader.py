@@ -66,7 +66,7 @@ for i, (symbol, score) in enumerate(top_picks):
             }
             requests.post(WEBHOOK_URL, json=discord_message)
 
-       except Exception as e:
+        except Exception as e:
            print(f"Failed to execute trade for {symbol}: {e}")
         except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
