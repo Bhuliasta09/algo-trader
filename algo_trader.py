@@ -47,21 +47,15 @@ ALLOCATIONS = [0.10, 0.10, 0.10]
 
 # Execute the trades
 for i, (symbol, score) in enumerate(top_picks):
-    # Only execute if the score indicates a favorable setup
     if score >= 15:
         investment_usd = BUDGET * ALLOCATIONS[i]
-
         try:
-            # Get the current coin price to calculate the order size
             current_price = exchange.fetch_ticker(symbol)['last']
             amount_to_buy = investment_usd / current_price
-
-            # LIVE TRADE EXECUTION
             order = exchange.create_market_buy_order(symbol, amount_to_buy)
             print(f"Successfully bought {amount_to_buy} of {symbol}")
-
-except Exception as e:
-    print(f"Failed to execute trade for {symbol}: {e}")
+        except Exception as e:
+            print(f"Failed to execute trade for {symbol}: {e}")
             print(f"Successfully bought {amount_to_buy} of {symbol}")
         except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
