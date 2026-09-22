@@ -3,7 +3,6 @@ import requests
 import ccxt
 import pandas_ta as ta
 import pandas as pd
-from transformers import pipeline
 
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 
@@ -60,7 +59,6 @@ for i, (symbol, score) in enumerate(top_picks):
         except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
         "inline": False
-    })
 
 requests.post(WEBHOOK_URL, json={
     "username": "Algo-Trader",
