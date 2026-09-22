@@ -3,17 +3,19 @@ import yfinance as yf
 import requests
 from transformers import pipeline
 import pandas as pd
-from io import StringIO
+import ccxt
+import pandas_ta as ta # for technical indicatoras
 
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
-# Fetch the top 50 highly liquid stocks from the S&P 500
-print("Fetching dynamic ticker list...")
-url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-headers = {"User-Agent":"Mozilla/5.0 (Windows NT10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0 Safari/537.36"}
-html = requests.get(url, headers=headers).text
-table = pd.read_html(StringIO(html))[0]
-WATCHLIST = table[table['CIK'].notnull()]['Symbol'].tolist()[:50]
+# Connect to your crypto exchange
+exchange = ccxt.binance({
+    'apiKey': os.environ.get("EXCHANGE_API_KEY"),
+    'secret': os.environ.get("EXCHANGE_SECRET"),
+    'enableRateLimit': True,
+})
 
+WATCHLIST = ['BTC/USDT', ETH/USDT', 'SOL/USDT', 'LINK/USDT', 'ADA/USDT']
+             
 sentiment_analyzer = pipeline("text-classification", model="ProsusAI/finbert")
 
 def get_stock_score(ticker_symbol):
@@ -21,14 +23,23 @@ def get_stock_score(ticker_symbol):
     fund_score = 0
     try:
         info = ticker.info
-        calc = (info.get('profitMargins', 0) * 100) - (info.get('debtToEquity', 100) / 10)
-        fund_score = max(0, min(50, calc))
-    except:
-        pass
+def get_crypto_score(symbol, exchange):
+    # Fetch historical blockchain/crypto data for technicals
+    ohlcv = exchange.fetch_ohlcv(symbol, timeframe='1d', limit=20)
+    df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
 
-    sentiment_score = 0
-    try:
-        news = ticker.news
+    # Calculate RSI (Relative Strength Index) for accuracy
+    df['RSI'] = ta.rsi(df['close'], length=14)
+    current_rsi = df['RSI'].iloc[-1]
+
+    # Score based on RSI (Buy when oversold < 30, avoid when overbought > 70)
+    tech_score = 0
+    if current_rsi < 30:
+        tech_score = 30
+    elif 30 <= current_rsi <= 70:
+        tech_score = 15
+
+    # (Keep your FinBERT news sentiment logic here to add to tech_score)
         if news:
             headlines = [item['title'] for item in news[:5]]
             results = sentiment_analyzer(headlines)
@@ -43,18 +54,22 @@ def get_stock_score(ticker_symbol):
 
     return fund_score + sentiment_score
 
-scores = {symbol: get_stock_score(symbol) for symbol in WATCHLIST}
-top_picks = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:3]
-
-BUDGET = 1500
-ALLOCATIONS = [0.10, 0.10, 0.10]
-
-embed_fields = []
+# Loop through your top picks and execute real trades
 for i, (symbol, score) in enumerate(top_picks):
-    investment = BUDGET * ALLOCATIONS[i]
-    embed_fields.append({
-        "name": f"#{i+1}: {symbol}",
-        "value": f"**Buy: ${investment:.2f}** | Score: {score:.1f}/100",
+    # Only buy if the score passes a certain confidence threshold
+    if score > 50:
+        trade_allocation = BUDGET * ALLOCATIONS[i]
+
+        # Fetch current price to calculate how much coin to buy
+        current_price = exchange.fetch_ticker(symbol)['last']
+        amount_to_buy = trade_allocation / current_price
+
+        try:
+            # Execute the market buy order on the blockchain/exchange
+            order = exchange.create_market_buy_order(symbol, amount_to_buy)
+            print(f"Successfully bought {amount_to_buy} of {symbol}")
+        except Exception as e:
+            print(f"Failed to execute trade for {symbol}: {e}")
         "inline": False
     })
 
