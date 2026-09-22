@@ -1,6 +1,6 @@
-yfinance
+ccxt
+pandas_ta
 transformers
 torch
 requests
 pandas
-lxml
