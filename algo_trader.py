@@ -1,72 +1,66 @@
 import os
-import yfinance as yf
 import requests
-from transformers import pipeline
-import pandas as pd
 import ccxt
-import pandas_ta as ta # for technical indicatoras
+import pandas_ta as ta
+import pandas as pd
+from transformers import pipeline
 
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
-# Connect to your crypto exchange
+
+# Initialize the blockchain/exchange connection
 exchange = ccxt.binance({
     'apiKey': os.environ.get("EXCHANGE_API_KEY"),
     'secret': os.environ.get("EXCHANGE_SECRET"),
     'enableRateLimit': True,
 })
 
-WATCHLIST = ['BTC/USDT', ETH/USDT', 'SOL/USDT', 'LINK/USDT', 'ADA/USDT']
-             
-sentiment_analyzer = pipeline("text-classification", model="ProsusAI/finbert")
-
-def get_stock_score(ticker_symbol):
-    ticker = yf.Ticker(ticker_symbol)
-    fund_score = 0
+# Define the crypto assets you want the bot to trade
+WATCHLIST = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'LINK/USDT', 'ADA/USDT']
+def get_crypto_score(symbol):
     try:
-        info = ticker.info
-def get_crypto_score(symbol, exchange):
-    # Fetch historical blockchain/crypto data for technicals
-    ohlcv = exchange.fetch_ohlcv(symbol, timeframe='1d', limit=20)
-    df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        # Fetch the last 20 days of market data from the exchange
+        ohlcv = exchange.fetch_ohlcv(symbol, timeframe='1d', limit=20)
+        df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
 
-    # Calculate RSI (Relative Strength Index) for accuracy
-    df['RSI'] = ta.rsi(df['close'], length=14)
-    current_rsi = df['RSI'].iloc[-1]
+        # Calculate RSI (Relative Strength Index)
+        df['RSI'] = ta.rsi(df['close'], length=14)
+        current_rsi = df['RSI'].iloc[-1]
 
-    # Score based on RSI (Buy when oversold < 30, avoid when overbought > 70)
-    tech_score = 0
-    if current_rsi < 30:
-        tech_score = 30
-    elif 30 <= current_rsi <= 70:
-        tech_score = 15
+        tech_score = 0
+        if current_rsi < 30:
+           tech_score += 30 # Oversold (Strong Buy)
+        elif 30 <= current_rsi <= 70:
+            tech_score += 15 # Neutral
 
-    # (Keep your FinBERT news sentiment logic here to add to tech_score)
-        if news:
-            headlines = [item['title'] for item in news[:5]]
-            results = sentiment_analyzer(headlines)
-            for res in results:
-                if res['label'] == 'positive':
-                    sentiment_score += 10
-                elif res['label'] == 'negative':
-                    sentiment_score -= 10
-                sentiment_score = max(0, min(50, (sentiment_score / 2) + 25))
-    except:
-        pass
+        return tech_score
+except Exception as e:
+    print(f"Error fetching data for {symbol}: {e}")
+    return 0
+                
+# Evaluate all coins in the watchlist
+scores = {symbol: get_crypto_score(symbol) for symbol in WATCHLIST}
+top_picks = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:3]
 
-    return fund_score + sentiment_score
+BUDGET = 1500
+ALLOCATIONS = [0.10, 0.10, 0.10]
 
-# Loop through your top picks and execute real trades
+# Execute the trades
 for i, (symbol, score) in enumerate(top_picks):
-    # Only buy if the score passes a certain confidence threshold
-    if score > 50:
-        trade_allocation = BUDGET * ALLOCATIONS[i]
-
-        # Fetch current price to calculate how much coin to buy
-        current_price = exchange.fetch_ticker(symbol)['last']
-        amount_to_buy = trade_allocation / current_price
+    # Only execute if the score indicates a favorable setup
+    if score >= 15:
+        investment_usd = BUDGET * ALLOCATIONS[i]
 
         try:
-            # Execute the market buy order on the blockchain/exchange
+            # Get the current coin price to calculate the order size
+            current_price = exchange.fetch_ticker(symbol)['last']
+            amount_to_buy = investment_usd / current_price
+
+            # LIVE TRADE EXECUTION
             order = exchange.create_market_buy_order(symbol, amount_to_buy)
+            print(f"Successfully bought {amount_to_buy} of {symbol}")
+
+except Exception as e:
+    print(f"Failed to execute trade for {symbol}: {e}")
             print(f"Successfully bought {amount_to_buy} of {symbol}")
         except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
