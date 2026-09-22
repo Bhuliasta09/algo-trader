@@ -58,7 +58,6 @@ for i, (symbol, score) in enumerate(top_picks):
             print(f"Successfully bought {amount_to_buy} of {symbol}")
         except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
-        "inline": False
 
 requests.post(WEBHOOK_URL, json={
     "username": "Algo-Trader",
