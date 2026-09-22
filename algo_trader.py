@@ -28,14 +28,15 @@ def get_crypto_score(symbol):
 
         tech_score = 0
         if current_rsi < 30:
-           tech_score += 30 # Oversold (Strong Buy)
+            tech_score += 30 # Oversold (Strong Buy)
         elif 30 <= current_rsi <= 70:
             tech_score += 15 # Neutral
 
         return tech_score
-except Exception as e:
-    print(f"Error fetching data for {symbol}: {e}")
-    return 0
+
+    except Exception as e:
+        print(f"Error fetching data for {symbol}: {e}")
+        return 0
                 
 # Evaluate all coins in the watchlist
 scores = {symbol: get_crypto_score(symbol) for symbol in WATCHLIST}
