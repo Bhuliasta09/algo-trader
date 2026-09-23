@@ -89,8 +89,14 @@ for i, (symbol, data) in enumerate(crypto_picks):
             order = exchange.create_market_buy_order(symbol, amount_to_buy)
             print(f"Successfully bought {amount_to_buy} of {symbol}")
 
-            # Post success confirmation to Discord
-            requests.post(WEBHOOK_URL, json={"content": f"✅ **TRADE EXECUTED:** Bought {amount_to_buy:.4f} {symbol}"})
+            # NEW: Send Discord Notification
+            discord_message = {
+                "content": f"✅ **TRADE EXECUTED:** Bought {amount_to_buy:.4f} {symbol} at ${current_price:.2f}"
+            }
+            requests.post(WEBHOOK_URL, json=discord_message)
+
+        except Exception as e:
+            print(f"Failed to execute trade for {symbol}: {e}")
 
         except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
