@@ -65,7 +65,7 @@ for i, (symbol, score) in enumerate(top_picks):
                 "content": f"✅ **TRADE EXECUTED:** Bought {amount_to_buy:.4f} {symbol} at ${current_price:.2f}"
             }
             requests.post(WEBHOOK_URL, json=discord_message)
-        expect Exception as e:
+        except Exception as e:
             print(f"Failed to execute trade for {symbol}: {e}")
 
         except Exception as e:
